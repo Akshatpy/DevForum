@@ -64,17 +64,26 @@ const Home = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 2, mb: 4 }}>
-      <Grid container spacing={2}>
-        {/* Sidebar - All Communities (Left Side) */}
-        <Grid item xs={12} md={3}>
-          <Paper 
-            elevation={1} 
-            sx={{ 
-              p: 2, 
-              position: { md: 'sticky' },
-              top: { md: 80 },
-              maxHeight: { md: 'calc(100vh - 100px)' },
+    <Container maxWidth="xl" sx={{ mt: 2, mb: 4 }}>
+      <Box sx={{ display: 'flex', gap: 2 }}>
+        
+        {/* Left Sidebar - All Communities */}
+        <Box
+          sx={{
+            width: { xs: '100%', md: 300 },
+            flexShrink: 0,
+            position: 'sticky',
+            top: 80,
+            alignSelf: 'flex-start',
+            height: 'calc(100vh - 100px)',
+            overflowY: 'auto',
+          }}
+        >
+          <Paper
+            elevation={1}
+            sx={{
+              p: 2,
+              height: '100%',
               display: 'flex',
               flexDirection: 'column',
             }}
@@ -83,26 +92,23 @@ const Home = () => {
               All Communities
             </Typography>
             <Divider sx={{ my: 1 }} />
-            <Box sx={{ 
-              overflowY: 'auto', 
-              flex: 1,
-              '&::-webkit-scrollbar': {
-                width: '8px',
-              },
-              '&::-webkit-scrollbar-track': {
-                background: 'transparent',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                background: 'rgba(0,0,0,0.2)',
-                borderRadius: '4px',
-              },
-            }}>
+            <Box
+              sx={{
+                overflowY: 'auto',
+                flex: 1,
+                '&::-webkit-scrollbar': { width: 8 },
+                '&::-webkit-scrollbar-thumb': {
+                  background: 'rgba(0,0,0,0.2)',
+                  borderRadius: 4,
+                },
+              }}
+            >
               {popularCommunities.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
                   No communities yet
                 </Typography>
               ) : (
-                popularCommunities.map((community, index) => (
+                popularCommunities.map((community) => (
                   <Box
                     key={community._id || community.name}
                     component={RouterLink}
@@ -148,10 +154,10 @@ const Home = () => {
               )}
             </Box>
           </Paper>
-        </Grid>
-
-        {/* Main Content - Questions Feed */}
-        <Grid item xs={12} md={9}>
+        </Box>
+  
+        {/* Right Section - Questions Feed */}
+        <Box sx={{ flexGrow: 1 }}>
           {/* Sort and Filter Bar */}
           <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
@@ -194,7 +200,7 @@ const Home = () => {
               />
             </Box>
           </Paper>
-
+  
           {/* Selected Tag Display */}
           {selectedTag && (
             <Paper elevation={1} sx={{ p: 1, mb: 2, bgcolor: 'primary.light', color: 'white' }}>
@@ -208,7 +214,7 @@ const Home = () => {
               </Box>
             </Paper>
           )}
-
+  
           {/* Questions Feed */}
           {loading ? (
             <Box display="flex" justifyContent="center" my={4}>
@@ -230,15 +236,11 @@ const Home = () => {
                 elevation={1}
                 sx={{
                   mb: 2,
-                  '&:hover': {
-                    borderLeft: '4px solid',
-                    borderColor: 'primary.main',
-                  },
+                  '&:hover': { borderLeft: '4px solid', borderColor: 'primary.main' },
                   transition: 'all 0.2s',
                 }}
               >
                 <Box display="flex">
-                  {/* Vote Section */}
                   <Box
                     display="flex"
                     flexDirection="column"
@@ -251,34 +253,29 @@ const Home = () => {
                       borderColor: 'divider',
                     }}
                   >
-                    <IconButton
-                      size="small"
-                      onClick={() => handleVote(question._id, 1)}
-                      color="primary"
-                    >
+                    <IconButton size="small" onClick={() => handleVote(question._id, 1)} color="primary">
                       <ArrowUpward />
                     </IconButton>
                     <Typography
                       variant="h6"
                       sx={{
                         fontWeight: 'bold',
-                        color: question.voteCount > 0 ? 'success.main' : question.voteCount < 0 ? 'error.main' : 'text.secondary',
+                        color:
+                          question.voteCount > 0
+                            ? 'success.main'
+                            : question.voteCount < 0
+                            ? 'error.main'
+                            : 'text.secondary',
                       }}
                     >
                       {question.voteCount || 0}
                     </Typography>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleVote(question._id, -1)}
-                      color="error"
-                    >
+                    <IconButton size="small" onClick={() => handleVote(question._id, -1)} color="error">
                       <ArrowDownward />
                     </IconButton>
                   </Box>
-
-                  {/* Content Section */}
+  
                   <Box flexGrow={1} sx={{ p: 2 }}>
-                    {/* Tags/Communities */}
                     <Box display="flex" flexWrap="wrap" gap={0.5} mb={1}>
                       {question.tags?.map((tag) => (
                         <Chip
@@ -297,8 +294,6 @@ const Home = () => {
                         />
                       ))}
                     </Box>
-
-                    {/* Title */}
                     <Typography
                       variant="h6"
                       component={RouterLink}
@@ -309,31 +304,18 @@ const Home = () => {
                         fontWeight: 'bold',
                         display: 'block',
                         mb: 1,
-                        '&:hover': {
-                          color: 'primary.main',
-                        },
+                        '&:hover': { color: 'primary.main' },
                       }}
                     >
                       {question.title}
                     </Typography>
-
-                    {/* Body Preview */}
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mb: 2, whiteSpace: 'pre-wrap' }}
-                    >
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2, whiteSpace: 'pre-wrap' }}>
                       {truncateText(question.body)}
                     </Typography>
-
-                    {/* Meta Information */}
                     <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
                       <Box display="flex" alignItems="center" gap={2}>
                         <Box display="flex" alignItems="center" gap={0.5}>
-                          <Avatar
-                            src={question.author?.avatar}
-                            sx={{ width: 20, height: 20 }}
-                          >
+                          <Avatar src={question.author?.avatar} sx={{ width: 20, height: 20 }}>
                             {question.author?.username?.charAt(0).toUpperCase()}
                           </Avatar>
                           <Typography variant="caption" color="text.secondary">
@@ -364,10 +346,11 @@ const Home = () => {
               </Paper>
             ))
           )}
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Container>
   );
+  
 };
 
 export default Home;

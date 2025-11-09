@@ -3,9 +3,6 @@ const router = express.Router();
 const Question = require('../models/Question');
 const Community = require('../models/Community');
 
-// @route   GET api/tags/popular
-// @desc    Get popular tags/communities (legacy endpoint, use /api/communities/popular instead)
-// @access  Public
 router.get('/popular', async (req, res) => {
   try {
     const tags = await Question.aggregate([

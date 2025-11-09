@@ -6,9 +6,6 @@ const User = require('../models/User');
 const Question = require('../models/Question');
 const Answer = require('../models/Answer');
 
-// @route   GET api/users/me
-// @desc    Get current user's profile
-// @access  Private
 router.get('/me', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
@@ -19,9 +16,6 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
-// @route   GET api/users/:username
-// @desc    Get user profile by username
-// @access  Public
 router.get('/:username', async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username })
@@ -32,7 +26,6 @@ router.get('/:username', async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Get user's questions with vote counts and answer counts
     const questions = await Question.find({ author: user._id })
       .select('title views answers votes createdAt')
       .populate('answers')
@@ -53,7 +46,6 @@ router.get('/:username', async (req, res) => {
       };
     });
 
-    // Get user's answers with vote counts
     const answers = await Answer.find({ author: user._id })
       .populate('question', 'title _id')
       .select('body question votes isAccepted createdAt')
@@ -72,7 +64,6 @@ router.get('/:username', async (req, res) => {
       };
     });
 
-    // Get total counts
     const questionCount = await Question.countDocuments({ author: user._id });
     const answerCount = await Answer.countDocuments({ author: user._id });
 
@@ -92,9 +83,6 @@ router.get('/:username', async (req, res) => {
   }
 });
 
-// @route   PUT api/users/profile
-// @desc    Update user profile
-// @access  Private
 router.put(
   '/profile',
   [
@@ -130,9 +118,6 @@ router.put(
   }
 );
 
-// @route   GET api/users/:username/questions
-// @desc    Get all questions by a user
-// @access  Public
 router.get('/:username/questions', async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username });
@@ -162,9 +147,6 @@ router.get('/:username/questions', async (req, res) => {
   }
 });
 
-// @route   GET api/users/:username/answers
-// @desc    Get all answers by a user
-// @access  Public
 router.get('/:username/answers', async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username });

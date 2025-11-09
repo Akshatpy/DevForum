@@ -16,11 +16,9 @@ import Profile from './components/profile/Profile';
 import CreateCommunity from './components/communities/CreateCommunity';
 import Community from './components/communities/Community';
 
-// Private Route Component
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated, loading } = useSelector(state => state.auth);
   
-  // Show loading state while checking authentication
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
@@ -36,7 +34,6 @@ const App = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    // Load user data if token exists on app initialization
     const token = localStorage.getItem('token');
     if (token) {
       dispatch(loadUser());
