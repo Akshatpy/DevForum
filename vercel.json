@@ -12,8 +12,25 @@
     }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "backend/api/index.js" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "frontend/build/index.html" }
+    {
+      "src": "/api/(.*)",
+      "dest": "backend/api/index.js"
+    },
+    {
+      "src": "/static/(.*)",
+      "dest": "frontend/build/static/$1"
+    },
+    {
+      "src": "/asset-manifest.json",
+      "dest": "frontend/build/asset-manifest.json"
+    },
+    {
+      "src": "/favicon.png",
+      "dest": "frontend/build/favicon.png"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "frontend/build/index.html"
+    }
   ]
 }
