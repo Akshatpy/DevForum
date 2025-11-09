@@ -26,7 +26,7 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { isAuthenticated, loading, error } = useSelector((state) => state.auth);
-
+  console.log(error);
   const { email, password } = formData;
 
   useEffect(() => {

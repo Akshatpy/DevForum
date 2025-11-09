@@ -27,6 +27,7 @@ const CreateCommunity = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { isAuthenticated, user } = useSelector(state => state.auth);
+  console.log(user);
   const { loading } = useSelector(state => state.questions);
 
   const { name, displayName, description } = formData;
