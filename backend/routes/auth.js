@@ -24,9 +24,16 @@ router.post(
     const { username, email, password } = req.body;
 
     try {
+      // Check if user with email already exists
       let user = await User.findOne({ email });
       if (user) {
-        return res.status(400).json({ message: 'User already exists' });
+        return res.status(400).json({ message: 'User with this email already exists' });
+      }
+
+      // Check if user with username already exists
+      user = await User.findOne({ username });
+      if (user) {
+        return res.status(400).json({ message: 'Username already taken' });
       }
 
       user = new User({
@@ -49,12 +56,28 @@ router.post(
         { expiresIn: '30d' },
         (err, token) => {
           if (err) throw err;
-          res.json({ token });
+          res.json({ 
+        token,
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          avatar: user.avatar,
+          reputation: user.reputation
+        }
+      });
         }
       );
     } catch (err) {
       console.error(err.message);
-      res.status(500).send('Server error');
+      // Handle MongoDB duplicate key error
+      if (err.code === 11000) {
+        const field = Object.keys(err.keyPattern)[0];
+        return res.status(400).json({ 
+          message: `${field === 'email' ? 'Email' : 'Username'} already exists` 
+        });
+      }
+      res.status(500).json({ message: 'Server error' });
     }
   }
 );
@@ -115,7 +138,7 @@ router.post(
       );
     } catch (err) {
       console.error(err.message);
-      res.status(500).send('Server error');
+      res.status(500).json({ message: 'Server error' });
     }
   }
 );
@@ -126,10 +149,13 @@ router.post(
 router.get('/user', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
     res.json(user);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    res.status(500).json({ message: 'Server Error' });
   }
 });
 

@@ -10,7 +10,7 @@ const auth = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findOne({ _id: decoded.userId }).select('-password');
+    const user = await User.findById(decoded.user.id).select('-password');
 
     if (!user) {
       throw new Error();
@@ -18,6 +18,7 @@ const auth = async (req, res, next) => {
 
     req.token = token;
     req.user = user;
+    req.user.id = user._id.toString();
     next();
   } catch (err) {
     res.status(401).json({ message: 'Please authenticate' });

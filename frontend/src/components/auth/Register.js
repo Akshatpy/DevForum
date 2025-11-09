@@ -20,28 +20,44 @@ import { setAlert } from '../../features/alert/alertSlice';
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: '',
   });
   const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState('');
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading } = useSelector((state) => state.auth);
+  const { loading, error, isAuthenticated } = useSelector((state) => state.auth);
   const theme = useTheme();
 
-  const { name, email, password, confirmPassword } = formData;
+  const { username, email, password, confirmPassword } = formData;
+
+  useEffect(() => {
+    // If logged in and user navigates to Register page, should redirect them to home
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
 
   const onChange = (e) => {
+    if (apiError) setApiError('');
+    if (errors[e.target.name]) {
+      setErrors(prev => ({
+        ...prev,
+        [e.target.name]: ''
+      }));
+    }
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const validateForm = () => {
     const newErrors = {};
-    if (!name.trim()) newErrors.name = 'Name is required';
+    if (!username.trim()) newErrors.username = 'Username is required';
     if (!email) newErrors.email = 'Email is required';
+    if (!email.includes('@')) newErrors.email = 'Please enter a valid email';
     if (!password) newErrors.password = 'Password is required';
     if (password && password.length < 6) newErrors.password = 'Password must be at least 6 characters';
     if (password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
@@ -55,10 +71,14 @@ const Register = () => {
     
     if (!validateForm()) return;
     try {
-      await dispatch(register({ name, email, password })).unwrap();
-      navigate('/');
+      const resultAction = await dispatch(register({ username, email, password }));
+      if (resultAction.error) {
+        setApiError(resultAction.payload?.message || 'Registration failed');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
-      // Error handling is done in the authSlice
+      setApiError(err.message || 'An unexpected error occurred');
     }
   };
 
@@ -92,16 +112,16 @@ const Register = () => {
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <TextField
-                  autoComplete="name"
-                  name="name"
+                  autoComplete="username"
+                  name="username"
                   required
                   fullWidth
-                  id="name"
-                  label="Full Name"
-                  value={name}
+                  id="username"
+                  label="Username"
+                  value={username}
                   onChange={onChange}
-                  error={!!errors.name}
-                  helperText={errors.name}
+                  error={!!errors.username}
+                  helperText={errors.username}
                   autoFocus
                 />
               </Grid>
@@ -112,12 +132,11 @@ const Register = () => {
                   id="email"
                   label="Email Address"
                   name="email"
-                  type="email"
+                  autoComplete="email"
                   value={email}
                   onChange={onChange}
                   error={!!errors.email}
                   helperText={errors.email}
-                  autoComplete="email"
                 />
               </Grid>
               <Grid item xs={12}>
@@ -128,11 +147,11 @@ const Register = () => {
                   label="Password"
                   type="password"
                   id="password"
+                  autoComplete="new-password"
                   value={password}
                   onChange={onChange}
                   error={!!errors.password}
                   helperText={errors.password}
-                  autoComplete="new-password"
                 />
               </Grid>
               <Grid item xs={12}>
@@ -147,9 +166,15 @@ const Register = () => {
                   onChange={onChange}
                   error={!!errors.confirmPassword}
                   helperText={errors.confirmPassword}
-                  autoComplete="new-password"
                 />
               </Grid>
+              {apiError && (
+                <Grid item xs={12}>
+                  <Typography color="error" variant="body2">
+                    {apiError}
+                  </Typography>
+                </Grid>
+              )}
             </Grid>
             <Button
               type="submit"
@@ -171,8 +196,7 @@ const Register = () => {
         </Paper>
         <Box mt={5}>
           <Typography variant="body2" color="text.secondary" align="center">
-            {' '}
-            <Link color="inherit" href="/">
+            <Link component={RouterLink} to="/" color="inherit">
               Dev-Connect
             </Link>{' '}
             {new Date().getFullYear()}

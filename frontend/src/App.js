@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, CssBaseline, Container } from "@mui/material";
+import { ThemeProvider, CssBaseline, Container, Box, CircularProgress } from "@mui/material";
 import theme from './theme';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { loadUser } from './features/auth/authSlice';
 
 // Components
 import Navbar from './components/layout/Navbar';
@@ -16,11 +17,31 @@ import Profile from './components/profile/Profile';
 
 // Private Route Component
 const PrivateRoute = ({ children }) => {
-  const { isAuthenticated } = useSelector(state => state.auth);
+  const { isAuthenticated, loading } = useSelector(state => state.auth);
+  
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+  
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
 const App = () => {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    // Load user data if token exists on app initialization
+    const token = localStorage.getItem('token');
+    if (token) {
+      dispatch(loadUser());
+    }
+  }, [dispatch]);
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />

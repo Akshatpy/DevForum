@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { login, loadUser } from '../../features/auth/authSlice';
+import { login } from '../../features/auth/authSlice';
 import {
   Container,
   Box,
@@ -60,8 +60,6 @@ const Login = () => {
     
     try {
       await dispatch(login({ email, password })).unwrap();
-      // Load user data after successful login
-      await dispatch(loadUser()).unwrap();
       navigate('/');
     } catch (err) {
       // Error handling is done in the authSlice

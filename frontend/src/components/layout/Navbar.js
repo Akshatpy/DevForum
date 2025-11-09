@@ -1,10 +1,18 @@
 import React from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, Button, Container, Box } from '@mui/material';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { logout } from '../../features/auth/authSlice';
 
 const Navbar = () => {
-  const { isAuthenticated } = useSelector(state => state.auth);
+  const { isAuthenticated, user } = useSelector(state => state.auth);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate('/');
+  };
 
   return (
     <AppBar position="static">
@@ -21,10 +29,16 @@ const Navbar = () => {
                 <Button color="inherit" component={RouterLink} to="/ask">
                   Ask Question
                 </Button>
-                <Button color="inherit" component={RouterLink} to="/profile">
-                  Profile
-                </Button>
-                <Button color="inherit">
+                {user && (
+                  <Button 
+                    color="inherit" 
+                    component={RouterLink} 
+                    to={`/users/${user.username}`}
+                  >
+                    {user.username}
+                  </Button>
+                )}
+                <Button color="inherit" onClick={handleLogout}>
                   Logout
                 </Button>
               </>
