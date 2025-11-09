@@ -1,6 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
+// Configure axios defaults with timeout
+axios.defaults.timeout = 15000; // 15 seconds timeout
+axios.defaults.headers.common['Content-Type'] = 'application/json';
+
 // Load token from localStorage if it exists and set axios header
 const token = localStorage.getItem('token');
 if (token) {
@@ -31,19 +35,24 @@ export const register = createAsyncThunk(
   'auth/register',
   async ({ username, email, password }, { rejectWithValue, dispatch }) => {
     try {
-      const config = {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      };
-
       const body = JSON.stringify({ username, email, password });
-      const res = await axios.post('/api/auth/register', body, config);
+      const res = await axios.post('/api/auth/register', body);
       
       setAuthToken(res.data.token);
       
       return res.data;
     } catch (err) {
+      // Handle network errors and timeouts
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        return rejectWithValue({ message: 'Request timed out. Please try again.' });
+      }
+      if (!err.response) {
+        return rejectWithValue({ message: 'Network error. Please check your connection.' });
+      }
+      // Handle 500 errors
+      if (err.response?.status === 500) {
+        return rejectWithValue({ message: 'Server error. Please try again later.' });
+      }
       // Handle validation errors
       const errors = err.response?.data?.errors;
       if (errors && Array.isArray(errors)) {
@@ -60,21 +69,27 @@ export const login = createAsyncThunk(
   'auth/login',
   async ({ email, password }, { rejectWithValue, dispatch }) => {
     try {
-      const config = {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      };
-
       const body = JSON.stringify({ email, password });
-
-      const res = await axios.post('/api/auth/login', body, config);
+      const res = await axios.post('/api/auth/login', body);
       
       setAuthToken(res.data.token);
       
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data || { message: 'Login failed' });
+      // Handle network errors and timeouts
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        return rejectWithValue({ message: 'Request timed out. Please try again.' });
+      }
+      if (!err.response) {
+        return rejectWithValue({ message: 'Network error. Please check your connection.' });
+      }
+      // Handle 500 errors
+      if (err.response?.status === 500) {
+        return rejectWithValue({ message: 'Server error. Please try again later.' });
+      }
+      // Handle other errors
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Login failed';
+      return rejectWithValue({ message: errorMessage });
     }
   }
 );
@@ -86,7 +101,7 @@ export const loadUser = createAsyncThunk(
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        return rejectWithValue({ message: 'No token found' });
+        return rejectWithValue({ message: 'No token found', silent: true });
       }
 
       setAuthToken(token);
@@ -95,7 +110,22 @@ export const loadUser = createAsyncThunk(
     } catch (err) {
       localStorage.removeItem('token');
       delete axios.defaults.headers.common['Authorization'];
-      return rejectWithValue(err.response?.data || { message: 'Failed to load user' });
+      // Don't show error for expired/invalid tokens - just clear auth state silently
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        return rejectWithValue({ message: 'Session expired', silent: true });
+      }
+      // Handle network errors and timeouts
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        return rejectWithValue({ message: 'Request timed out', silent: true });
+      }
+      if (!err.response) {
+        return rejectWithValue({ message: 'Network error', silent: true });
+      }
+      // Handle 500 errors
+      if (err.response?.status === 500) {
+        return rejectWithValue({ message: 'Server error', silent: true });
+      }
+      return rejectWithValue({ message: 'Failed to load user', silent: true });
     }
   }
 );
@@ -177,7 +207,12 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.loading = false;
         state.user = null;
-        state.error = action.payload?.message || 'Failed to load user';
+        // Only set error if not silent (for user-initiated actions)
+        if (!action.payload?.silent) {
+          state.error = action.payload?.message || 'Failed to load user';
+        } else {
+          state.error = null;
+        }
       });
   },
 });

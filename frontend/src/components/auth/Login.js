@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { login } from '../../features/auth/authSlice';
+import { login, clearError } from '../../features/auth/authSlice';
 import {
   Container,
   Box,
@@ -13,6 +13,7 @@ import {
   CircularProgress,
   useTheme,
   Grid,
+  Alert,
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
@@ -42,6 +43,10 @@ const Login = () => {
     if (errors[e.target.name]) {
       setErrors({ ...errors, [e.target.name]: '' });
     }
+    // Clear Redux error when user starts typing
+    if (error) {
+      dispatch(clearError());
+    }
   };
 
   const validateForm = () => {
@@ -62,7 +67,7 @@ const Login = () => {
       await dispatch(login({ email, password })).unwrap();
       navigate('/');
     } catch (err) {
-      // Error handling is done in the authSlice
+      // Error is handled in authSlice and displayed via error state
     }
   };
 
@@ -77,21 +82,22 @@ const Login = () => {
         }}
       >
         <Paper
-          elevation={3}
+          elevation={4}
           sx={{
             padding: 4,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             width: '100%',
+            borderRadius: 2,
           }}
         >
           <Box
             sx={{
               backgroundColor: theme.palette.primary.main,
               color: 'white',
-              width: 40,
-              height: 40,
+              width: 48,
+              height: 48,
               borderRadius: '50%',
               display: 'flex',
               justifyContent: 'center',
@@ -101,10 +107,15 @@ const Login = () => {
           >
             <LockOutlinedIcon />
           </Box>
-          <Typography component="h1" variant="h5">
+          <Typography component="h1" variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
             Sign In
           </Typography>
-          <Box component="form" onSubmit={onSubmit} sx={{ mt: 3, width: '100%' }}>
+          <Box component="form" onSubmit={onSubmit} sx={{ mt: 2, width: '100%' }}>
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }} onClose={() => dispatch(clearError())}>
+                {error}
+              </Alert>
+            )}
             <TextField
               margin="normal"
               required
@@ -118,6 +129,11 @@ const Login = () => {
               helperText={errors.email}
               autoComplete="email"
               autoFocus
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 1,
+                },
+              }}
             />
             <TextField
               margin="normal"
@@ -132,19 +148,43 @@ const Login = () => {
               error={!!errors.password}
               helperText={errors.password}
               autoComplete="current-password"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 1,
+                },
+              }}
             />
             <Button
               type="submit"
               fullWidth
               variant="contained"
               disabled={loading}
-              sx={{ mt: 3, mb: 2, py: 1.5 }}
+              sx={{ 
+                mt: 3, 
+                mb: 2, 
+                py: 1.5,
+                borderRadius: 1,
+                textTransform: 'none',
+                fontSize: '1rem',
+                fontWeight: 600,
+              }}
             >
               {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
             </Button>
-            <Grid container justifyContent="flex-end">
+            <Grid container justifyContent="center">
               <Grid item>
-                <Link component={RouterLink} to="/register" variant="body2">
+                <Link 
+                  component={RouterLink} 
+                  to="/register" 
+                  variant="body2"
+                  sx={{
+                    color: theme.palette.primary.main,
+                    textDecoration: 'none',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    },
+                  }}
+                >
                   Don't have an account? Sign Up
                 </Link>
               </Grid>

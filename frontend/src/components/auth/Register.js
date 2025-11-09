@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { register } from '../../features/auth/authSlice';
+import { register, clearError } from '../../features/auth/authSlice';
 import {
   Avatar,
   Button,
@@ -14,6 +14,7 @@ import {
   Paper,
   CircularProgress,
   useTheme,
+  Alert,
 } from '@mui/material';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
@@ -44,6 +45,10 @@ const Register = () => {
 
   const onChange = (e) => {
     if (apiError) setApiError('');
+    // Clear Redux error when user starts typing
+    if (error) {
+      dispatch(clearError());
+    }
     if (errors[e.target.name]) {
       setErrors(prev => ({
         ...prev,
@@ -73,7 +78,9 @@ const Register = () => {
     try {
       const resultAction = await dispatch(register({ username, email, password }));
       if (resultAction.error) {
-        setApiError(resultAction.payload?.message || 'Registration failed');
+        // Error is set in Redux state, but also set local state for display
+        const errorMsg = resultAction.payload?.message || 'Registration failed';
+        setApiError(errorMsg);
       } else {
         navigate('/');
       }
@@ -83,7 +90,7 @@ const Register = () => {
   };
 
   return (
-    <Container component="main" maxWidth="xs">
+    <Container component="main" maxWidth="sm">
       <Box
         sx={{
           marginTop: 8,
@@ -93,23 +100,37 @@ const Register = () => {
         }}
       >
         <Paper
-          elevation={3}
+          elevation={4}
           sx={{
-            padding: 4,
+            padding: { xs: 3, sm: 4 },
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             width: '100%',
+            maxWidth: 500,
+            borderRadius: 2,
           }}
         >
-          <Avatar sx={{ backgroundColor: theme.palette.primary.main, color: 'white' }}>
+          <Avatar sx={{ backgroundColor: theme.palette.primary.main, color: 'white', width: 48, height: 48 }}>
             <PersonAddIcon />
           </Avatar>
-          <Typography component="h1" variant="h5">
+          <Typography component="h1" variant="h5" sx={{ fontWeight: 600, mb: 1, mt: 1 }}>
             Sign Up
           </Typography>
-          <Box component="form" onSubmit={onSubmit} sx={{ mt: 3, width: '100%' }}>
-            <Grid container spacing={2}>
+          <Box component="form" onSubmit={onSubmit} sx={{ mt: 2, width: '100%' }}>
+            {(apiError || error) && (
+              <Alert 
+                severity="error" 
+                sx={{ mb: 2 }} 
+                onClose={() => {
+                  setApiError('');
+                  if (error) dispatch(clearError());
+                }}
+              >
+                {apiError || error}
+              </Alert>
+            )}
+            <Grid container spacing={2.5}>
               <Grid item xs={12}>
                 <TextField
                   autoComplete="username"
@@ -123,6 +144,12 @@ const Register = () => {
                   error={!!errors.username}
                   helperText={errors.username}
                   autoFocus
+                  size="medium"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 1,
+                    },
+                  }}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -137,6 +164,12 @@ const Register = () => {
                   onChange={onChange}
                   error={!!errors.email}
                   helperText={errors.email}
+                  size="medium"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 1,
+                    },
+                  }}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -152,6 +185,12 @@ const Register = () => {
                   onChange={onChange}
                   error={!!errors.password}
                   helperText={errors.password}
+                  size="medium"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 1,
+                    },
+                  }}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -166,28 +205,46 @@ const Register = () => {
                   onChange={onChange}
                   error={!!errors.confirmPassword}
                   helperText={errors.confirmPassword}
+                  size="medium"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 1,
+                    },
+                  }}
                 />
               </Grid>
-              {apiError && (
-                <Grid item xs={12}>
-                  <Typography color="error" variant="body2">
-                    {apiError}
-                  </Typography>
-                </Grid>
-              )}
             </Grid>
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 2, py: 1.5 }}
+              sx={{ 
+                mt: 3, 
+                mb: 2, 
+                py: 1.5,
+                borderRadius: 1,
+                textTransform: 'none',
+                fontSize: '1rem',
+                fontWeight: 600,
+              }}
               disabled={loading}
             >
               {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign Up'}
             </Button>
-            <Grid container justifyContent="flex-end">
+            <Grid container justifyContent="center">
               <Grid item>
-                <Link component={RouterLink} to="/login" variant="body2">
+                <Link 
+                  component={RouterLink} 
+                  to="/login" 
+                  variant="body2"
+                  sx={{
+                    color: theme.palette.primary.main,
+                    textDecoration: 'none',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    },
+                  }}
+                >
                   Already have an account? Sign in
                 </Link>
               </Grid>
