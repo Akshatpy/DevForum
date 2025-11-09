@@ -23,11 +23,12 @@ const AskQuestion = () => {
   });
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((state) => state.auth);
+  const { loading } = useSelector((state) => state.questions);
 
   const { title, body } = formData;
 

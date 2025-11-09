@@ -14,6 +14,7 @@ import AskQuestion from './components/questions/AskQuestion';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import Profile from './components/profile/Profile';
+import CreateCommunity from './components/communities/CreateCommunity';
 
 // Private Route Component
 const PrivateRoute = ({ children }) => {
@@ -61,6 +62,14 @@ const App = () => {
                 element={
                   <PrivateRoute>
                     <AskQuestion />
+                  </PrivateRoute>
+                } 
+              />
+              <Route 
+                path="/communities/create" 
+                element={
+                  <PrivateRoute>
+                    <CreateCommunity />
                   </PrivateRoute>
                 } 
               />

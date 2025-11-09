@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
+import axios from 'axios';
 import { formatDistanceToNow } from 'date-fns';
 import {
   Container,
@@ -14,6 +15,7 @@ import {
   Chip,
   CircularProgress,
   Button,
+  Alert,
 } from '@mui/material';
 import {
   Person as PersonIcon,

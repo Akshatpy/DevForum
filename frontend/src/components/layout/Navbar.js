@@ -29,6 +29,9 @@ const Navbar = () => {
                 <Button color="inherit" component={RouterLink} to="/ask">
                   Ask Question
                 </Button>
+                <Button color="inherit" component={RouterLink} to="/communities/create">
+                  Create Community
+                </Button>
                 {user && (
                   <Button 
                     color="inherit" 

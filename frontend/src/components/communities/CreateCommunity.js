@@ -32,7 +32,7 @@ const CreateCommunity = () => {
   const { name, displayName, description } = formData;
 
   const onChange = (e) => {
-    setFormData({ ...formData, [e.target.name: e.target.value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
     setError('');
     setSuccess('');
   };
