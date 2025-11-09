@@ -25,10 +25,6 @@ const answerSchema = new mongoose.Schema({
       enum: [1, -1]
     }
   }],
-  comments: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Comment'
-  }],
   isAccepted: {
     type: Boolean,
     default: false
@@ -39,18 +35,15 @@ const answerSchema = new mongoose.Schema({
   }
 }, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } });
 
-// Virtual for vote count
 answerSchema.virtual('voteCount').get(function() {
   return this.votes.reduce((total, vote) => total + vote.value, 0);
 });
 
-// Update score before saving
 answerSchema.pre('save', function(next) {
   this.score = this.voteCount - (new Date() - this.createdAt) / (1000 * 60 * 60 * 24);
   next();
 });
 
-// Update question's isAnswered when an answer is accepted
 answerSchema.pre('save', async function(next) {
   if (this.isModified('isAccepted') && this.isAccepted) {
     const Question = mongoose.model('Question');

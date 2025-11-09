@@ -5,9 +5,6 @@ const { check, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { auth } = require('../middleware/auth');
 
-// @route   POST api/auth/register
-// @desc    Register a user
-// @access  Public
 router.post(
   '/register',
   [
@@ -24,13 +21,11 @@ router.post(
     const { username, email, password } = req.body;
 
     try {
-      // Check if user with email already exists
       let user = await User.findOne({ email });
       if (user) {
         return res.status(400).json({ message: 'User with this email already exists' });
       }
 
-      // Check if user with username already exists
       user = await User.findOne({ username });
       if (user) {
         return res.status(400).json({ message: 'Username already taken' });
@@ -70,7 +65,6 @@ router.post(
       );
     } catch (err) {
       console.error(err.message);
-      // Handle MongoDB duplicate key error
       if (err.code === 11000) {
         const field = Object.keys(err.keyPattern)[0];
         return res.status(400).json({ 
@@ -82,9 +76,6 @@ router.post(
   }
 );
 
-// @route   POST api/auth/login
-// @desc    Authenticate user & get token
-// @access  Public
 router.post(
   '/login',
   [
@@ -143,9 +134,6 @@ router.post(
   }
 );
 
-// @route   GET api/auth/user
-// @desc    Get user data
-// @access  Private
 router.get('/user', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');

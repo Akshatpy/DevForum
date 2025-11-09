@@ -6,9 +6,6 @@ const Answer = require('../models/Answer');
 const Question = require('../models/Question');
 const User = require('../models/User');
 
-// @route   POST api/answers/:questionId
-// @desc    Add an answer to a question
-// @access  Private
 router.post(
   '/:questionId',
   [auth, [check('body', 'Answer body is required').not().isEmpty()]],
@@ -32,11 +29,9 @@ router.post(
 
       await answer.save();
 
-      // Add answer to question's answers array
       question.answers.push(answer._id);
       await question.save();
 
-      // Populate author info
       await answer.populate('author', 'username avatar reputation');
 
       const answerData = answer.toObject();
@@ -50,9 +45,6 @@ router.post(
   }
 );
 
-// @route   PUT api/answers/accept/:id
-// @desc    Mark an answer as accepted
-// @access  Private
 router.put('/accept/:id', auth, async (req, res) => {
   try {
     const answer = await Answer.findById(req.params.id)
@@ -62,15 +54,12 @@ router.put('/accept/:id', auth, async (req, res) => {
       return res.status(404).json({ message: 'Answer not found' });
     }
 
-    // Check if user is the question author
     if (answer.question.author.toString() !== req.user.id) {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
-    // If answer is already accepted, unaccept it
     answer.isAccepted = !answer.isAccepted;
     
-    // If accepting, unaccept any previously accepted answers
     if (answer.isAccepted) {
       await Answer.updateMany(
         { 
@@ -81,7 +70,6 @@ router.put('/accept/:id', auth, async (req, res) => {
         { $set: { isAccepted: false } }
       );
       
-      // Award reputation to answer author
       const answerAuthor = await User.findById(answer.author);
       answerAuthor.reputation = (answerAuthor.reputation || 0) + 15;
       await answerAuthor.save();
@@ -89,11 +77,9 @@ router.put('/accept/:id', auth, async (req, res) => {
 
     await answer.save();
     
-    // Populate author and question
     await answer.populate('author', 'username avatar reputation');
     await answer.populate('question', 'author');
     
-    // Calculate vote count
     const voteCount = answer.votes ? answer.votes.reduce((sum, vote) => sum + vote.value, 0) : 0;
     const answerData = answer.toObject();
     answerData.voteCount = voteCount;
@@ -106,9 +92,6 @@ router.put('/accept/:id', auth, async (req, res) => {
   }
 });
 
-// @route   PUT api/answers/vote/:id
-// @desc    Vote on an answer
-// @access  Private
 router.put('/vote/:id', auth, async (req, res) => {
   try {
     const answer = await Answer.findById(req.params.id);
@@ -121,28 +104,22 @@ router.put('/vote/:id', auth, async (req, res) => {
       return res.status(400).json({ message: 'Vote value must be 1 or -1' });
     }
 
-    // Check if user already voted
     const voteIndex = answer.votes.findIndex(
       vote => vote.user.toString() === req.user.id
     );
 
     if (voteIndex >= 0) {
-      // User already voted
       if (answer.votes[voteIndex].value === value) {
-        // Remove vote if same value
         answer.votes.splice(voteIndex, 1);
       } else {
-        // Update vote if different value
         answer.votes[voteIndex].value = value;
       }
     } else {
-      // Add new vote
       answer.votes.push({ user: req.user.id, value });
     }
 
     await answer.save();
     
-    // Update answer author's reputation
     if (answer.author.toString() !== req.user.id) {
       const author = await User.findById(answer.author);
       const repChange = value > 0 ? 10 : -2;
@@ -150,13 +127,11 @@ router.put('/vote/:id', auth, async (req, res) => {
       await author.save();
     }
 
-    // Calculate vote count
     const voteCount = answer.votes ? answer.votes.reduce((sum, vote) => sum + vote.value, 0) : 0;
     const answerData = answer.toObject();
     answerData.voteCount = voteCount;
-    answerData.votes = undefined; // Don't send full votes array
+    answerData.votes = undefined;
 
-    // Populate author
     await answer.populate('author', 'username avatar reputation');
     answerData.author = answer.author;
 
@@ -167,9 +142,6 @@ router.put('/vote/:id', auth, async (req, res) => {
   }
 });
 
-// @route   DELETE api/answers/:id
-// @desc    Delete an answer
-// @access  Private
 router.delete('/:id', auth, async (req, res) => {
   try {
     const answer = await Answer.findById(req.params.id);
@@ -178,12 +150,10 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(404).json({ message: 'Answer not found' });
     }
 
-    // Check user is the author or admin
     if (answer.author.toString() !== req.user.id && !req.user.isAdmin) {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
-    // Remove answer from question's answers array
     await Question.updateOne(
       { _id: answer.question },
       { $pull: { answers: answer._id } }
