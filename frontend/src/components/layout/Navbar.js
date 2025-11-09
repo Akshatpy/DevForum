@@ -20,7 +20,7 @@ const Navbar = () => {
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             <Button color="inherit" component={RouterLink} to="/">
-              DevConnect
+              DevForum
             </Button>
           </Typography>
           <Box>
