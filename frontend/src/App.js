@@ -36,7 +36,10 @@ const App = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      dispatch(loadUser());
+      dispatch(loadUser()).catch(() => {
+        // Error is handled in the reducer, but ensure we don't get stuck
+        // The reducer will set loading to false on rejection
+      });
     }
   }, [dispatch]);
 
