@@ -25,19 +25,19 @@ import {
   Search as SearchIcon,
 } from '@mui/icons-material';
 import { formatDistanceToNow } from 'date-fns';
-import { fetchQuestions, fetchPopularTags, voteQuestion, setSelectedTag, clearSelectedTag } from '../../features/questions/questionsSlice';
+import { fetchQuestions, fetchPopularCommunities, voteQuestion, setSelectedTag, clearSelectedTag } from '../../features/questions/questionsSlice';
 
 const Home = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useSelector(state => state.auth);
-  const { questions, popularTags, loading, selectedTag, totalPages, currentPage } = useSelector(state => state.questions);
+  const { questions, popularCommunities, loading, selectedTag, totalPages, currentPage } = useSelector(state => state.questions);
   const [sortBy, setSortBy] = useState('-createdAt');
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     dispatch(fetchQuestions({ page: 1, limit: 20, sort: sortBy, tag: selectedTag, search: searchQuery || null }));
-    dispatch(fetchPopularTags());
+    dispatch(fetchPopularCommunities());
   }, [dispatch, sortBy, selectedTag, searchQuery]);
 
   const handleVote = async (questionId, value) => {
@@ -284,74 +284,62 @@ const Home = () => {
 
         {/* Sidebar */}
         <Grid item xs={12} md={4}>
-          {/* Popular Communities */}
+          {/* All Communities */}
           <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-              Popular Communities
+              All Communities
             </Typography>
             <Divider sx={{ my: 1 }} />
-            {popularTags.length === 0 ? (
+            {popularCommunities.length === 0 ? (
               <Typography variant="body2" color="text.secondary">
                 No communities yet
               </Typography>
             ) : (
-              popularTags.map((tag, index) => (
+              popularCommunities.map((community, index) => (
                 <Box
-                  key={tag.name}
+                  key={community._id || community.name}
+                  component={RouterLink}
+                  to={`/communities/${community.name}`}
                   display="flex"
                   justifyContent="space-between"
                   alignItems="center"
                   sx={{
                     py: 1,
                     cursor: 'pointer',
+                    textDecoration: 'none',
                     '&:hover': { bgcolor: 'action.hover' },
                     borderRadius: 1,
                     px: 1,
                     mb: 0.5,
                   }}
-                  onClick={() => handleTagClick(tag.name)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleTagClick(community.name);
+                    navigate(`/communities/${community.name}`);
+                  }}
                 >
                   <Box display="flex" alignItems="center" gap={1}>
-                    <Typography variant="h6" sx={{ color: 'text.secondary' }}>
-                      {index + 1}
-                    </Typography>
                     <Box>
-                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                        r/{tag.name}
+                      <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+                        r/{community.name}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {tag.count} {tag.count === 1 ? 'thread' : 'threads'}
+                      {community.displayName && (
+                        <Typography variant="caption" color="text.secondary">
+                          {community.displayName}
+                        </Typography>
+                      )}
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        {community.postCount || 0} {community.postCount === 1 ? 'thread' : 'threads'} • {community.memberCount || 0} members
                       </Typography>
                     </Box>
                   </Box>
-                  {selectedTag === tag.name && (
+                  {selectedTag === community.name && (
                     <Chip label="Active" size="small" color="primary" />
                   )}
                 </Box>
               ))
             )}
           </Paper>
-
-          {/* Ask Question CTA */}
-          {isAuthenticated && (
-            <Paper elevation={1} sx={{ p: 2, bgcolor: 'primary.light', color: 'white' }}>
-              <Typography variant="h6" gutterBottom>
-                Ask a Question
-              </Typography>
-              <Typography variant="body2" sx={{ mb: 2 }}>
-                Share your knowledge or get help from the community
-              </Typography>
-              <Button
-                variant="contained"
-                fullWidth
-                component={RouterLink}
-                to="/ask"
-                sx={{ bgcolor: 'white', color: 'primary.main', '&:hover': { bgcolor: 'grey.100' } }}
-              >
-                Ask Question
-              </Button>
-            </Paper>
-          )}
         </Grid>
       </Grid>
     </Container>

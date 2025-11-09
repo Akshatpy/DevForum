@@ -41,17 +41,54 @@ router.get('/', async (req, res) => {
 });
 
 // @route   GET api/communities/popular
-// @desc    Get popular communities
+// @desc    Get all communities (sorted by member count, includes tag-based communities)
 // @access  Public
 router.get('/popular', async (req, res) => {
   try {
+    // Get all created communities
     const communities = await Community.find({ isPublic: true })
-      .sort('-memberCount')
-      .limit(20)
+      .sort('-memberCount -postCount')
       .select('name displayName description memberCount postCount')
+      .lean()
       .exec();
     
-    res.json(communities);
+    // Get all tags from questions that might not have communities
+    const tagCounts = await Question.aggregate([
+      { $unwind: '$tags' },
+      { $group: { _id: '$tags', count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
+    ]);
+    
+    // Create a map of existing communities
+    const communityMap = new Map();
+    communities.forEach(comm => {
+      communityMap.set(comm.name, comm);
+    });
+    
+    // Add tag-based communities that don't have a Community record
+    const allCommunities = [...communities];
+    tagCounts.forEach(tag => {
+      if (!communityMap.has(tag._id)) {
+        allCommunities.push({
+          name: tag._id,
+          displayName: tag._id.charAt(0).toUpperCase() + tag._id.slice(1),
+          description: '',
+          memberCount: 0,
+          postCount: tag.count,
+          _id: null, // No community record
+        });
+      }
+    });
+    
+    // Sort by post count and member count
+    allCommunities.sort((a, b) => {
+      if (b.postCount !== a.postCount) {
+        return b.postCount - a.postCount;
+      }
+      return b.memberCount - a.memberCount;
+    });
+    
+    res.json(allCommunities);
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ message: 'Server Error' });
@@ -59,24 +96,49 @@ router.get('/popular', async (req, res) => {
 });
 
 // @route   GET api/communities/:name
-// @desc    Get community by name
+// @desc    Get community by name (or create placeholder for tag-based communities)
 // @access  Public
 router.get('/:name', async (req, res) => {
   try {
-    const community = await Community.findOne({ name: req.params.name.toLowerCase() })
+    const communityName = req.params.name.toLowerCase();
+    let community = await Community.findOne({ name: communityName })
       .populate('createdBy', 'username avatar')
       .populate('moderators', 'username avatar')
+      .lean()
       .exec();
 
+    // If community doesn't exist, check if it's a tag and create a placeholder
     if (!community) {
-      return res.status(404).json({ message: 'Community not found' });
+      // Check if there are questions with this tag
+      const questionCount = await Question.countDocuments({ tags: communityName });
+      
+      if (questionCount > 0) {
+        // It's a tag-based community
+        community = {
+          name: communityName,
+          displayName: communityName.charAt(0).toUpperCase() + communityName.slice(1),
+          description: '',
+          memberCount: 0,
+          postCount: questionCount,
+          createdBy: null,
+          moderators: [],
+          isPublic: true,
+        };
+      } else {
+        return res.status(404).json({ message: 'Community not found' });
+      }
+    } else {
+      // Update post count from actual questions
+      const questionCount = await Question.countDocuments({ tags: communityName });
+      community.postCount = questionCount;
     }
 
     // Get recent questions in this community
-    const questions = await Question.find({ tags: community.name })
+    const questions = await Question.find({ tags: communityName })
       .populate('author', 'username avatar')
       .sort('-createdAt')
       .limit(10)
+      .lean()
       .exec();
 
     res.json({

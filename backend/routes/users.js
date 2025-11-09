@@ -32,25 +32,56 @@ router.get('/:username', async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Get user's questions
+    // Get user's questions with vote counts and answer counts
     const questions = await Question.find({ author: user._id })
       .select('title views answers votes createdAt')
+      .populate('answers')
       .sort('-createdAt')
-      .limit(5)
+      .limit(10)
       .lean();
 
-    // Get user's answers
+    const questionsWithCounts = questions.map(question => {
+      const voteCount = question.votes ? question.votes.reduce((sum, vote) => sum + vote.value, 0) : 0;
+      const answerCount = question.answers ? question.answers.length : 0;
+      return {
+        _id: question._id,
+        title: question.title,
+        views: question.views || 0,
+        voteCount,
+        answerCount,
+        createdAt: question.createdAt,
+      };
+    });
+
+    // Get user's answers with vote counts
     const answers = await Answer.find({ author: user._id })
-      .populate('question', 'title')
+      .populate('question', 'title _id')
       .select('body question votes isAccepted createdAt')
       .sort('-createdAt')
-      .limit(5)
+      .limit(10)
       .lean();
+
+    const answersWithCounts = answers.map(answer => {
+      const voteCount = answer.votes ? answer.votes.reduce((sum, vote) => sum + vote.value, 0) : 0;
+      return {
+        _id: answer._id,
+        question: answer.question,
+        voteCount,
+        isAccepted: answer.isAccepted || false,
+        createdAt: answer.createdAt,
+      };
+    });
+
+    // Get total counts
+    const questionCount = await Question.countDocuments({ author: user._id });
+    const answerCount = await Answer.countDocuments({ author: user._id });
 
     res.json({
       ...user,
-      questions,
-      answers
+      questions: questionsWithCounts,
+      answers: answersWithCounts,
+      questionCount,
+      answerCount,
     });
   } catch (err) {
     console.error(err.message);

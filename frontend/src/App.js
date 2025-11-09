@@ -10,11 +10,11 @@ import Navbar from './components/layout/Navbar';
 import Alert from './components/layout/Alert';
 import Home from './components/pages/Home';
 import Question from './components/questions/Question';
-import AskQuestion from './components/questions/AskQuestion';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import Profile from './components/profile/Profile';
 import CreateCommunity from './components/communities/CreateCommunity';
+import Community from './components/communities/Community';
 
 // Private Route Component
 const PrivateRoute = ({ children }) => {
@@ -57,14 +57,7 @@ const App = () => {
               <Route path="/register" element={<Register />} />
               <Route path="/questions/:id" element={<Question />} />
               <Route path="/users/:username" element={<Profile />} />
-              <Route 
-                path="/ask" 
-                element={
-                  <PrivateRoute>
-                    <AskQuestion />
-                  </PrivateRoute>
-                } 
-              />
+              <Route path="/communities/:name" element={<Community />} />
               <Route 
                 path="/communities/create" 
                 element={

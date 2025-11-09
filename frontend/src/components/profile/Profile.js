@@ -31,63 +31,54 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const { user: currentUser } = useSelector((state) => state.auth);
 
+  const [error, setError] = useState('');
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        // TODO: Replace with actual API call
-        // const res = await axios.get(`/api/users/${username}`);
-        // setProfileData(res.data);
+        setLoading(true);
+        setError('');
+        const res = await axios.get(`/api/users/${username}`);
         
-        // Mock data for now
-        setTimeout(() => {
-          setProfileData({
-            _id: '1',
-            username: username || 'sampleuser',
-            email: 'user@example.com',
-            bio: 'Full-stack developer passionate about React, Node.js, and open source.',
-            avatar: '',
-            reputation: 1250,
-            joinedAt: new Date('2023-01-15'),
-            questions: [
-              {
-                _id: 'q1',
-                title: 'How to use React hooks effectively?',
-                votes: 15,
-                answers: 5,
-                views: 120,
-                createdAt: new Date('2023-05-10'),
-              },
-              {
-                _id: 'q2',
-                title: 'Best practices for MongoDB schema design',
-                votes: 8,
-                answers: 3,
-                views: 85,
-                createdAt: new Date('2023-06-22'),
-              },
-            ],
-            answers: [
-              {
-                _id: 'a1',
-                question: {
-                  _id: 'q3',
-                  title: 'How to deploy a MERN stack application?',
-                },
-                votes: 10,
-                isAccepted: true,
-                createdAt: new Date('2023-07-05'),
-              },
-            ],
-          });
-          setLoading(false);
-        }, 500);
+        // Calculate vote counts for questions
+        const questionsWithCounts = res.data.questions?.map(question => {
+          const voteCount = question.votes ? question.votes.reduce((sum, vote) => sum + vote.value, 0) : 0;
+          const answerCount = question.answers ? question.answers.length : 0;
+          return {
+            ...question,
+            voteCount,
+            answerCount,
+            votes: question.voteCount || voteCount,
+            answers: answerCount,
+          };
+        }) || [];
+
+        // Calculate vote counts for answers
+        const answersWithCounts = res.data.answers?.map(answer => {
+          const voteCount = answer.votes ? answer.votes.reduce((sum, vote) => sum + vote.value, 0) : 0;
+          return {
+            ...answer,
+            voteCount,
+            votes: voteCount,
+          };
+        }) || [];
+
+        setProfileData({
+          ...res.data,
+          questions: questionsWithCounts,
+          answers: answersWithCounts,
+        });
+        setLoading(false);
       } catch (err) {
         console.error('Error fetching profile:', err);
+        setError(err.response?.data?.message || 'Failed to load profile');
         setLoading(false);
       }
     };
 
-    fetchProfile();
+    if (username) {
+      fetchProfile();
+    }
   }, [username]);
 
   const handleTabChange = (event, newValue) => {
@@ -102,7 +93,15 @@ const Profile = () => {
     );
   }
 
-  if (!profileData) {
+  if (error) {
+    return (
+      <Container maxWidth="md" sx={{ my: 4 }}>
+        <Alert severity="error">{error}</Alert>
+      </Container>
+    );
+  }
+
+  if (!loading && !profileData) {
     return (
       <Container maxWidth="md" sx={{ my: 4 }}>
         <Typography variant="h5">Profile not found</Typography>
@@ -156,7 +155,7 @@ const Profile = () => {
               <Box display="flex" alignItems="center">
                 <PersonIcon color="action" sx={{ mr: 1 }} />
                 <Typography variant="body2" color="textSecondary">
-                  {profileData.questions?.length || 0} Questions • {profileData.answers?.length || 0} Answers
+                  {profileData.questionCount || profileData.questions?.length || 0} Questions • {profileData.answerCount || profileData.answers?.length || 0} Answers
                 </Typography>
               </Box>
               <Box display="flex" alignItems="center">
@@ -188,7 +187,7 @@ const Profile = () => {
         {activeTab === 0 && (
           <Box>
             <Typography variant="h6" gutterBottom>
-              {profileData.questions?.length || 0} Questions
+              {profileData.questionCount || profileData.questions?.length || 0} Questions
             </Typography>
             {profileData.questions?.length > 0 ? (
               profileData.questions.map((question) => (
@@ -197,13 +196,13 @@ const Profile = () => {
                     <Box display="flex" alignItems="center" mr={3}>
                       <ThumbUpIcon color="action" fontSize="small" sx={{ mr: 0.5 }} />
                       <Typography variant="body2" color="text.secondary">
-                        {question.votes} votes
+                        {question.voteCount || 0} votes
                       </Typography>
                     </Box>
                     <Box display="flex" alignItems="center" mr={3}>
                       <QuestionAnswerIcon color="action" fontSize="small" sx={{ mr: 0.5 }} />
                       <Typography variant="body2" color="text.secondary">
-                        {question.answers} answers
+                        {question.answerCount || 0} answers
                       </Typography>
                     </Box>
                     <Typography variant="caption" color="text.secondary">
@@ -237,7 +236,7 @@ const Profile = () => {
         {activeTab === 1 && (
           <Box>
             <Typography variant="h6" gutterBottom>
-              {profileData.answers?.length || 0} Answers
+              {profileData.answerCount || profileData.answers?.length || 0} Answers
             </Typography>
             {profileData.answers?.length > 0 ? (
               profileData.answers.map((answer) => (
@@ -246,7 +245,7 @@ const Profile = () => {
                     <Box display="flex" alignItems="center" mr={3}>
                       <ThumbUpIcon color="action" fontSize="small" sx={{ mr: 0.5 }} />
                       <Typography variant="body2" color="text.secondary">
-                        {answer.votes} votes
+                        {answer.voteCount || 0} votes
                       </Typography>
                       {answer.isAccepted && (
                         <Chip
@@ -261,21 +260,23 @@ const Profile = () => {
                       {formatDistanceToNow(new Date(answer.createdAt), { addSuffix: true })}
                     </Typography>
                   </Box>
-                  <Typography 
-                    component={RouterLink}
-                    to={`/questions/${answer.question._id}`}
-                    variant="subtitle1"
-                    sx={{
-                      display: 'block',
-                      textDecoration: 'none',
-                      color: 'text.primary',
-                      '&:hover': {
-                        textDecoration: 'underline',
-                      },
-                    }}
-                  >
-                    {answer.question.title}
-                  </Typography>
+                  {answer.question && (
+                    <Typography 
+                      component={RouterLink}
+                      to={`/questions/${answer.question._id}`}
+                      variant="subtitle1"
+                      sx={{
+                        display: 'block',
+                        textDecoration: 'none',
+                        color: 'text.primary',
+                        '&:hover': {
+                          textDecoration: 'underline',
+                        },
+                      }}
+                    >
+                      {answer.question.title}
+                    </Typography>
+                  )}
                 </Paper>
               ))
             ) : (
