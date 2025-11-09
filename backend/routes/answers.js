@@ -37,12 +37,15 @@ router.post(
       await question.save();
 
       // Populate author info
-      await answer.populate('author', 'username avatar');
+      await answer.populate('author', 'username avatar reputation');
 
-      res.status(201).json(answer);
+      const answerData = answer.toObject();
+      answerData.voteCount = 0;
+
+      res.status(201).json(answerData);
     } catch (err) {
       console.error(err.message);
-      res.status(500).send('Server Error');
+      res.status(500).json({ message: 'Server Error' });
     }
   }
 );
@@ -86,10 +89,20 @@ router.put('/accept/:id', auth, async (req, res) => {
 
     await answer.save();
     
-    res.json(answer);
+    // Populate author and question
+    await answer.populate('author', 'username avatar reputation');
+    await answer.populate('question', 'author');
+    
+    // Calculate vote count
+    const voteCount = answer.votes ? answer.votes.reduce((sum, vote) => sum + vote.value, 0) : 0;
+    const answerData = answer.toObject();
+    answerData.voteCount = voteCount;
+    answerData.votes = undefined;
+    
+    res.json(answerData);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    res.status(500).json({ message: 'Server Error' });
   }
 });
 
@@ -137,10 +150,20 @@ router.put('/vote/:id', auth, async (req, res) => {
       await author.save();
     }
 
-    res.json(answer);
+    // Calculate vote count
+    const voteCount = answer.votes ? answer.votes.reduce((sum, vote) => sum + vote.value, 0) : 0;
+    const answerData = answer.toObject();
+    answerData.voteCount = voteCount;
+    answerData.votes = undefined; // Don't send full votes array
+
+    // Populate author
+    await answer.populate('author', 'username avatar reputation');
+    answerData.author = answer.author;
+
+    res.json(answerData);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    res.status(500).json({ message: 'Server Error' });
   }
 });
 
@@ -173,7 +196,7 @@ router.delete('/:id', auth, async (req, res) => {
     if (err.kind === 'ObjectId') {
       return res.status(404).json({ message: 'Answer not found' });
     }
-    res.status(500).send('Server Error');
+    res.status(500).json({ message: 'Server Error' });
   }
 });
 
