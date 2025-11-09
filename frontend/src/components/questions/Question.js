@@ -8,7 +8,6 @@ import {
   Box,
   Paper,
   Button,
-  Divider,
   Chip,
   Avatar,
   TextField,
@@ -145,7 +144,7 @@ const Question = () => {
       setSubmitting(true);
       setError('');
       const res = await axios.post(`/api/answers/${id}`, { body: answer });
-      
+      console.log(res.data);
       // Refresh question and answers to get the complete updated data
       const questionRes = await axios.get(`/api/questions/${id}`);
       setQuestion(questionRes.data);
