@@ -83,10 +83,22 @@ router.get('/:id', async (req, res) => {
     const voteCount = question.votes ? question.votes.reduce((sum, vote) => sum + vote.value, 0) : 0;
     const answerCount = question.answers ? question.answers.length : 0;
     
+    // Process answers with vote counts
+    const processedAnswers = (question.answers || []).map(answer => {
+      const answerVoteCount = answer.votes ? answer.votes.reduce((sum, vote) => sum + vote.value, 0) : 0;
+      const answerData = answer.toObject ? answer.toObject() : answer;
+      return {
+        ...answerData,
+        voteCount: answerVoteCount,
+        votes: undefined, // Don't send full votes array
+      };
+    });
+    
     const questionData = question.toObject();
     questionData.voteCount = voteCount;
     questionData.answerCount = answerCount;
     questionData.votes = undefined; // Don't send full votes array
+    questionData.answers = processedAnswers;
     
     res.json(questionData);
   } catch (err) {
