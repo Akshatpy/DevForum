@@ -66,8 +66,92 @@ const Home = () => {
   return (
     <Container maxWidth="lg" sx={{ mt: 2, mb: 4 }}>
       <Grid container spacing={2}>
-        {/* Main Content */}
-        <Grid item xs={12} md={8}>
+        {/* Sidebar - All Communities (Left Side) */}
+        <Grid item xs={12} md={3}>
+          <Paper 
+            elevation={1} 
+            sx={{ 
+              p: 2, 
+              position: { md: 'sticky' },
+              top: { md: 80 },
+              maxHeight: { md: 'calc(100vh - 100px)' },
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+              All Communities
+            </Typography>
+            <Divider sx={{ my: 1 }} />
+            <Box sx={{ 
+              overflowY: 'auto', 
+              flex: 1,
+              '&::-webkit-scrollbar': {
+                width: '8px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: 'transparent',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: 'rgba(0,0,0,0.2)',
+                borderRadius: '4px',
+              },
+            }}>
+              {popularCommunities.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  No communities yet
+                </Typography>
+              ) : (
+                popularCommunities.map((community, index) => (
+                  <Box
+                    key={community._id || community.name}
+                    component={RouterLink}
+                    to={`/communities/${community.name}`}
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    sx={{
+                      py: 1,
+                      cursor: 'pointer',
+                      textDecoration: 'none',
+                      '&:hover': { bgcolor: 'action.hover' },
+                      borderRadius: 1,
+                      px: 1,
+                      mb: 0.5,
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleTagClick(community.name);
+                      navigate(`/communities/${community.name}`);
+                    }}
+                  >
+                    <Box display="flex" alignItems="center" gap={1} flexGrow={1}>
+                      <Box flexGrow={1}>
+                        <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+                          r/{community.name}
+                        </Typography>
+                        {community.displayName && (
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            {community.displayName}
+                          </Typography>
+                        )}
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          {community.postCount || 0} {community.postCount === 1 ? 'thread' : 'threads'} • {community.memberCount || 0} members
+                        </Typography>
+                      </Box>
+                    </Box>
+                    {selectedTag === community.name && (
+                      <Chip label="Active" size="small" color="primary" sx={{ ml: 1 }} />
+                    )}
+                  </Box>
+                ))
+              )}
+            </Box>
+          </Paper>
+        </Grid>
+
+        {/* Main Content - Questions Feed */}
+        <Grid item xs={12} md={9}>
           {/* Sort and Filter Bar */}
           <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
@@ -280,66 +364,6 @@ const Home = () => {
               </Paper>
             ))
           )}
-        </Grid>
-
-        {/* Sidebar */}
-        <Grid item xs={12} md={4}>
-          {/* All Communities */}
-          <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-              All Communities
-            </Typography>
-            <Divider sx={{ my: 1 }} />
-            {popularCommunities.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">
-                No communities yet
-              </Typography>
-            ) : (
-              popularCommunities.map((community, index) => (
-                <Box
-                  key={community._id || community.name}
-                  component={RouterLink}
-                  to={`/communities/${community.name}`}
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  sx={{
-                    py: 1,
-                    cursor: 'pointer',
-                    textDecoration: 'none',
-                    '&:hover': { bgcolor: 'action.hover' },
-                    borderRadius: 1,
-                    px: 1,
-                    mb: 0.5,
-                  }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleTagClick(community.name);
-                    navigate(`/communities/${community.name}`);
-                  }}
-                >
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Box>
-                      <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
-                        r/{community.name}
-                      </Typography>
-                      {community.displayName && (
-                        <Typography variant="caption" color="text.secondary">
-                          {community.displayName}
-                        </Typography>
-                      )}
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        {community.postCount || 0} {community.postCount === 1 ? 'thread' : 'threads'} • {community.memberCount || 0} members
-                      </Typography>
-                    </Box>
-                  </Box>
-                  {selectedTag === community.name && (
-                    <Chip label="Active" size="small" color="primary" />
-                  )}
-                </Box>
-              ))
-            )}
-          </Paper>
         </Grid>
       </Grid>
     </Container>

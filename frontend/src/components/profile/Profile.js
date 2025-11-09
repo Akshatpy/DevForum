@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import axios from 'axios';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -16,22 +16,39 @@ import {
   CircularProgress,
   Button,
   Alert,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
 } from '@mui/material';
 import {
   Person as PersonIcon,
   QuestionAnswer as QuestionAnswerIcon,
   ThumbUp as ThumbUpIcon,
   CalendarToday as CalendarIcon,
+  Edit as EditIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
+import { loadUser } from '../../features/auth/authSlice';
 
 const Profile = () => {
   const { username } = useParams();
+  const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState(0);
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const { user: currentUser } = useSelector((state) => state.auth);
 
   const [error, setError] = useState('');
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    bio: '',
+    avatar: '',
+  });
+  const [editing, setEditing] = useState(false);
+  const [editError, setEditError] = useState('');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -85,6 +102,54 @@ const Profile = () => {
     setActiveTab(newValue);
   };
 
+  const handleEditClick = () => {
+    if (!profileData) return;
+    setEditForm({
+      bio: profileData.bio || '',
+      avatar: profileData.avatar || '',
+    });
+    setEditDialogOpen(true);
+    setEditError('');
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    setEditing(true);
+    setEditError('');
+
+    try {
+      const res = await axios.put('/api/users/profile', editForm);
+      
+      // Update profile data
+      setProfileData({
+        ...profileData,
+        bio: res.data.bio,
+        avatar: res.data.avatar,
+      });
+      
+      // Update current user in Redux store
+      dispatch(loadUser());
+      
+      setEditDialogOpen(false);
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      setEditError(err.response?.data?.message || 'Failed to update profile');
+    } finally {
+      setEditing(false);
+    }
+  };
+
+  const handleEditCancel = () => {
+    setEditDialogOpen(false);
+    if (profileData) {
+      setEditForm({
+        bio: profileData.bio || '',
+        avatar: profileData.avatar || '',
+      });
+    }
+    setEditError('');
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" my={4}>
@@ -127,7 +192,8 @@ const Profile = () => {
               <Button 
                 variant="outlined" 
                 size="small"
-                // onClick={() => setEditMode(true)}
+                startIcon={<EditIcon />}
+                onClick={handleEditClick}
               >
                 Edit Profile
               </Button>
@@ -178,7 +244,6 @@ const Profile = () => {
         >
           <Tab label="Questions" />
           <Tab label="Answers" />
-          <Tab label="Activity" />
         </Tabs>
       </Box>
 
@@ -285,16 +350,56 @@ const Profile = () => {
           </Box>
         )}
 
-        {activeTab === 2 && (
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              Recent Activity
-            </Typography>
-            <Typography>Activity feed will be displayed here.</Typography>
-            {/* Activity feed implementation would go here */}
-          </Box>
-        )}
       </Box>
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={editDialogOpen} onClose={handleEditCancel} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">Edit Profile</Typography>
+            <IconButton onClick={handleEditCancel} size="small">
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <form onSubmit={handleEditSubmit}>
+          <DialogContent>
+            {editError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {editError}
+              </Alert>
+            )}
+            <TextField
+              fullWidth
+              multiline
+              rows={4}
+              label="Bio"
+              value={editForm.bio}
+              onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+              placeholder="Tell us about yourself..."
+              sx={{ mb: 2 }}
+              inputProps={{ maxLength: 500 }}
+              helperText={`${editForm.bio.length}/500 characters`}
+            />
+            <TextField
+              fullWidth
+              label="Avatar URL"
+              value={editForm.avatar}
+              onChange={(e) => setEditForm({ ...editForm, avatar: e.target.value })}
+              placeholder="https://example.com/avatar.jpg"
+              helperText="Enter a URL for your profile picture"
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleEditCancel} disabled={editing}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="contained" disabled={editing}>
+              {editing ? <CircularProgress size={24} /> : 'Save Changes'}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
     </Container>
   );
 };

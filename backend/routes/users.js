@@ -113,7 +113,7 @@ router.put(
     const profileFields = {};
     
     if (bio !== undefined) profileFields.bio = bio;
-    if (avatar) profileFields.avatar = avatar;
+    if (avatar !== undefined) profileFields.avatar = avatar;
 
     try {
       let user = await User.findByIdAndUpdate(
@@ -125,7 +125,7 @@ router.put(
       res.json(user);
     } catch (err) {
       console.error(err.message);
-      res.status(500).send('Server Error');
+      res.status(500).json({ message: 'Server Error' });
     }
   }
 );
