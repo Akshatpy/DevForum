@@ -37,7 +37,7 @@ router.post(
       await question.save();
 
       // Populate author info
-      await answer.populate('author', 'username avatar').execPopulate();
+      await answer.populate('author', 'username avatar');
 
       res.status(201).json(answer);
     } catch (err) {

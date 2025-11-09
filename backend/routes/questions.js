@@ -23,21 +23,35 @@ router.get('/', async (req, res) => {
 
     const questions = await Question.find(query)
       .populate('author', 'username avatar')
+      .populate('answers')
       .sort(sort)
       .limit(limit * 1)
       .skip((page - 1) * limit)
+      .lean()
       .exec();
+
+    // Calculate vote counts and answer counts
+    const questionsWithCounts = questions.map(question => {
+      const voteCount = question.votes ? question.votes.reduce((sum, vote) => sum + vote.value, 0) : 0;
+      const answerCount = question.answers ? question.answers.length : 0;
+      return {
+        ...question,
+        voteCount,
+        answerCount,
+        votes: undefined // Don't send full votes array to client
+      };
+    });
 
     const count = await Question.countDocuments(query);
 
     res.json({
-      questions,
+      questions: questionsWithCounts,
       totalPages: Math.ceil(count / limit),
       currentPage: page
     });
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    res.status(500).json({ message: 'Server Error' });
   }
 });
 
@@ -65,13 +79,22 @@ router.get('/:id', async (req, res) => {
     question.views += 1;
     await question.save();
 
-    res.json(question);
+    // Calculate vote count and answer count
+    const voteCount = question.votes ? question.votes.reduce((sum, vote) => sum + vote.value, 0) : 0;
+    const answerCount = question.answers ? question.answers.length : 0;
+    
+    const questionData = question.toObject();
+    questionData.voteCount = voteCount;
+    questionData.answerCount = answerCount;
+    questionData.votes = undefined; // Don't send full votes array
+    
+    res.json(questionData);
   } catch (err) {
     console.error(err.message);
     if (err.kind === 'ObjectId') {
       return res.status(404).json({ message: 'Question not found' });
     }
-    res.status(500).send('Server Error');
+    res.status(500).json({ message: 'Server Error' });
   }
 });
 
@@ -106,10 +129,25 @@ router.post(
 
       await question.save();
       
+      // Update community post counts
+      const Community = require('../models/Community');
+      for (const tag of tags) {
+        await Community.findOneAndUpdate(
+          { name: tag.toLowerCase() },
+          { $inc: { postCount: 1 } },
+          { upsert: false } // Don't create if doesn't exist
+        );
+      }
+      
       // Populate author info
-      await question.populate('author', 'username avatar').execPopulate();
+      await question.populate('author', 'username avatar');
 
-      res.status(201).json(question);
+      // Calculate vote count and answer count for new question
+      const questionData = question.toObject();
+      questionData.voteCount = 0;
+      questionData.answerCount = 0;
+
+      res.status(201).json(questionData);
     } catch (err) {
       console.error(err.message);
       res.status(500).send('Server Error');
@@ -161,10 +199,22 @@ router.put('/vote/:id', auth, async (req, res) => {
       await author.save();
     }
 
-    res.json(question);
+    // Reload question with answers to get accurate count
+    await question.populate('answers');
+    
+    // Calculate vote count
+    const voteCount = question.votes ? question.votes.reduce((sum, vote) => sum + vote.value, 0) : 0;
+    const answerCount = question.answers ? question.answers.length : 0;
+    
+    const questionData = question.toObject();
+    questionData.voteCount = voteCount;
+    questionData.answerCount = answerCount;
+    questionData.votes = undefined; // Don't send full votes array
+    
+    res.json(questionData);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    res.status(500).json({ message: 'Server Error' });
   }
 });
 

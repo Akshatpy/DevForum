@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-import { setAlert } from '../alert/alertSlice';
 
 // Load token from localStorage if it exists and set axios header
 const token = localStorage.getItem('token');
@@ -43,22 +42,14 @@ export const register = createAsyncThunk(
       
       setAuthToken(res.data.token);
       
-      dispatch(
-        setAlert({ msg: 'Registration successful!', alertType: 'success' })
-      );
-      
       return res.data;
     } catch (err) {
       // Handle validation errors
       const errors = err.response?.data?.errors;
       if (errors && Array.isArray(errors)) {
-        errors.forEach(error => 
-          dispatch(setAlert({ msg: error.msg || 'Validation error', alertType: 'error' }))
-        );
         return rejectWithValue({ message: errors[0]?.msg || 'Validation failed' });
       }
       const errorMessage = err.response?.data?.message || 'Registration failed';
-      dispatch(setAlert({ msg: errorMessage, alertType: 'error' }));
       return rejectWithValue({ message: errorMessage });
     }
   }
@@ -81,21 +72,9 @@ export const login = createAsyncThunk(
       
       setAuthToken(res.data.token);
       
-      dispatch(
-        setAlert({ msg: 'Login successful!', alertType: 'success' })
-      );
-      
       return res.data;
     } catch (err) {
-      const errors = err.response?.data?.errors;
-      if (errors) {
-        errors.forEach(error => 
-          dispatch(setAlert({ msg: error.msg || 'Login failed', alertType: 'error' }))
-        );
-      } else if (err.response?.data?.message) {
-        dispatch(setAlert({ msg: err.response.data.message, alertType: 'error' }));
-      }
-      return rejectWithValue(err.response?.data || 'Login failed');
+      return rejectWithValue(err.response?.data || { message: 'Login failed' });
     }
   }
 );

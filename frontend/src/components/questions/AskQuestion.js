@@ -11,7 +11,9 @@ import {
   Chip,
   Divider,
   CircularProgress,
+  Alert,
 } from '@mui/material';
+import { createQuestion } from '../../features/questions/questionsSlice';
 
 const AskQuestion = () => {
   const [formData, setFormData] = useState({
@@ -41,11 +43,19 @@ const AskQuestion = () => {
     if (['Enter', 'Tab', ','].includes(e.key)) {
       e.preventDefault();
       
-      const tag = tagInput.trim();
+      const tag = tagInput.trim().toLowerCase();
       
-      if (tag && !tags.includes(tag)) {
-        setTags([...tags, tag]);
-        setTagInput('');
+      if (tag && !tags.includes(tag) && tags.length < 5) {
+        // Validate tag format (letters, numbers, hyphens, underscores only)
+        if (/^[a-z0-9_-]+$/.test(tag)) {
+          setTags([...tags, tag]);
+          setTagInput('');
+          setError('');
+        } else {
+          setError('Tags can only contain letters, numbers, hyphens, and underscores');
+        }
+      } else if (tags.length >= 5) {
+        setError('Maximum 5 tags allowed');
       }
     }
   };
@@ -56,6 +66,7 @@ const AskQuestion = () => {
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     
     if (!isAuthenticated) {
       navigate('/login');
@@ -63,23 +74,25 @@ const AskQuestion = () => {
     }
     
     if (tags.length === 0) {
-      // Show error about required tags
+      setError('At least one tag is required');
+      return;
+    }
+    
+    if (tags.length > 5) {
+      setError('Maximum 5 tags allowed');
       return;
     }
     
     try {
-      setLoading(true);
-      // TODO: Implement question submission
-      console.log('Submitting question:', { title, body, tags });
+      const result = await dispatch(createQuestion({ title, body, tags })).unwrap();
       // Reset form
       setFormData({ title: '', body: '', tags: '' });
       setTags([]);
+      setTagInput('');
       // Navigate to the new question
-      // navigate(`/questions/${questionId}`);
+      navigate(`/questions/${result._id}`);
     } catch (err) {
-      console.error('Error submitting question:', err);
-    } finally {
-      setLoading(false);
+      setError(err.message || 'Failed to create question');
     }
   };
 
@@ -159,7 +172,7 @@ const AskQuestion = () => {
               <Typography component="span" color="error">*</Typography>
             </Typography>
             <Typography variant="caption" display="block" gutterBottom>
-              Add up to 5 tags to describe what your question is about
+              Add up to 5 tags to describe what your question is about. Tags will create/use communities (e.g., "java" creates r/java)
             </Typography>
             <TextField
               fullWidth
@@ -167,20 +180,32 @@ const AskQuestion = () => {
               value={tagInput}
               onChange={handleTagInputChange}
               onKeyDown={handleTagKeyDown}
-              placeholder="e.g. (react javascript css)"
+              placeholder="e.g. react javascript css"
               helperText="Press enter, tab or comma to add a tag"
+              disabled={tags.length >= 5}
             />
             <Box mt={1}>
               {tags.map((tag) => (
                 <Chip
                   key={tag}
-                  label={tag}
+                  label={`r/${tag}`}
                   onDelete={() => removeTag(tag)}
                   sx={{ m: 0.5 }}
                 />
               ))}
             </Box>
+            {tags.length >= 5 && (
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                Maximum 5 tags reached
+              </Typography>
+            )}
           </Box>
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
 
           <Divider sx={{ my: 3 }} />
 
