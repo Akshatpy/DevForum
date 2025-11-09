@@ -16,7 +16,6 @@ import {
   useTheme,
 } from '@mui/material';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import { setAlert } from '../../features/alert/alertSlice';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -31,6 +30,7 @@ const Register = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error, isAuthenticated } = useSelector((state) => state.auth);
+  console.log(error);
   const theme = useTheme();
 
   const { username, email, password, confirmPassword } = formData;

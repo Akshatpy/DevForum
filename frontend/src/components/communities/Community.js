@@ -8,9 +8,7 @@ import {
   Typography,
   Paper,
   Button,
-  Chip,
   CircularProgress,
-  Divider,
   IconButton,
   Avatar,
   TextField,
@@ -31,6 +29,7 @@ const Community = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { isAuthenticated, user } = useSelector(state => state.auth);
+  console.log(user);
   const { questions, loading } = useSelector(state => state.questions);
   
   const [community, setCommunity] = useState(null);

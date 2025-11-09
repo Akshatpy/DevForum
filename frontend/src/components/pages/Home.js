@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   Container,
-  Grid,
   Paper,
   Box,
   Typography,
@@ -31,10 +30,11 @@ const Home = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useSelector(state => state.auth);
+  console.log(user);
   const { questions, popularCommunities, loading, selectedTag, totalPages, currentPage } = useSelector(state => state.questions);
   const [sortBy, setSortBy] = useState('-createdAt');
   const [searchQuery, setSearchQuery] = useState('');
-
+  console.log(totalPages);
   useEffect(() => {
     dispatch(fetchQuestions({ page: 1, limit: 20, sort: sortBy, tag: selectedTag, search: searchQuery || null }));
     dispatch(fetchPopularCommunities());

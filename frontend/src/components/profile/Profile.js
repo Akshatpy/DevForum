@@ -11,7 +11,6 @@ import {
   Avatar,
   Tabs,
   Tab,
-  Divider,
   Chip,
   CircularProgress,
   Button,
@@ -56,7 +55,7 @@ const Profile = () => {
         setLoading(true);
         setError('');
         const res = await axios.get(`/api/users/${username}`);
-        
+        console.log(res.data);
         // Calculate vote counts for questions
         const questionsWithCounts = res.data.questions?.map(question => {
           const voteCount = question.votes ? question.votes.reduce((sum, vote) => sum + vote.value, 0) : 0;
