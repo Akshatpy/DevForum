@@ -51,7 +51,7 @@ const Navbar = () => {
                 },
               }}
             >
-              Dev-Connect
+              DevForum
             </Button>
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
