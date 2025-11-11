@@ -11,12 +11,11 @@ DevForum is a full-stack, community-driven Q&A platform for developers, inspired
 ## Key Features
 
 * **Full MERN Stack:** Built from the ground up with MongoDB, Express.js, React, and Node.js.
-* **Authentication:** Secure user registration and login using JSON Web Tokens (JWT) and `bcryptjs` for password hashing.
+* **Authentication:** Secure user registration and login using JSON Web Tokens (JWT) and `bcryptjs` for password hashing. ( so that we can't store passwords in the db !! ) 
 * **Community-Based (Subreddit Style):** Users can create, join, and post questions within specific communities (e.g., `r/javascript`, `r/python`).
 * **Q&A Functionality:**
-    * Users can **post questions** with a title, body, and tags.
-    * Users can **post answers** to any question.
-    * Question authors can **accept one answer** as the correct one.
+    * Users can **post questions** with a title, body, and tags , and post **answers** to any question.
+    * Users can reply to a thread , and make communities too.
 * **Voting & Reputation:**
     * Users can **upvote** or **downvote** both questions and answers.
     * A **reputation system** automatically grants points to users for upvotes and accepted answers.
@@ -26,10 +25,6 @@ DevForum is a full-stack, community-driven Q&A platform for developers, inspired
 * **Dynamic Feed:**
     * The home page features a main feed of all questions.
     * Users can **sort** the feed by "New," "Top" (by votes), or "Hot" (by answer count).
-    * Users can **filter** the feed by clicking on a community/tag.
-* **State Management:** Uses **Redux Toolkit** for efficient and centralized front-end state management.
-* **UI/UX:** Clean, responsive, and modern interface built with **Material-UI (MUI)**.
-* **Deployment:** Configured for seamless monorepo deployment on **Vercel**.
 
 ## Tech Stack
 
@@ -46,7 +41,6 @@ DevForum is a full-stack, community-driven Q&A platform for developers, inspired
 * **React.js:** UI library
 * **Redux Toolkit:** State management
 * **React Router:** Client-side routing
-* **Material-UI (MUI):** React component library
 * **Axios:** HTTP client for API requests
 
 ### Deployment
